@@ -7,6 +7,7 @@ microscopy images into one of 5 MoA categories with Grad-CAM explainability.
 import io
 import os
 
+import requests
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -414,15 +415,70 @@ CLASS_INFO = {
     },
 }
 
-# ── Model loading ─────────────────────────────────────────────────────────────
+# ── Model download + loading ──────────────────────────────────────────────────
+
+HF_URL = (
+    "https://huggingface.co/Ertaza/breast-cancer-moa-resnet50"
+    "/resolve/main/best_resnet50_transfer_model.keras"
+)
+
+
+def ensure_model() -> bool:
+    """
+    Return True if the model is ready to use.
+    Downloads from Hugging Face if the file is missing, streaming the response
+    so a progress bar can be shown. Returns False only on a network/IO error.
+    """
+    if os.path.exists(MODEL_PATH):
+        return True
+
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+
+    status = st.status("📥 Downloading model from Hugging Face…", expanded=True)
+    try:
+        with status:
+            st.write(f"Source: `{HF_URL}`")
+            st.write(f"Destination: `{MODEL_PATH}`")
+
+            response = requests.get(HF_URL, stream=True, timeout=120)
+            response.raise_for_status()
+
+            total = int(response.headers.get("content-length", 0))
+            bar   = st.progress(0, text="Starting download…")
+
+            downloaded = 0
+            with open(MODEL_PATH, "wb") as f:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total:
+                            pct  = downloaded / total
+                            done = downloaded / (1024 * 1024)
+                            full = total      / (1024 * 1024)
+                            bar.progress(pct, text=f"{done:.1f} MB / {full:.1f} MB")
+
+            bar.progress(1.0, text="Download complete ✓")
+            st.write("✅ Model saved successfully.")
+        status.update(label="Model ready", state="complete", expanded=False)
+        return True
+
+    except Exception as exc:
+        status.update(label="Download failed", state="error", expanded=True)
+        # Remove partial file so a retry starts clean
+        if os.path.exists(MODEL_PATH):
+            os.remove(MODEL_PATH)
+        st.error(
+            f"**Could not download model:** {exc}\n\n"
+            f"Place `best_resnet50_transfer_model.keras` manually at "
+            f"`{MODEL_PATH}` and reload the page."
+        )
+        return False
+
 
 @st.cache_resource(show_spinner="Loading ResNet50 model…")
 def load_resnet_model():
     return load_model(MODEL_PATH)
-
-
-def model_available() -> bool:
-    return os.path.exists(MODEL_PATH)
 
 # ── Preprocessing ─────────────────────────────────────────────────────────────
 
@@ -633,17 +689,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Model availability check ──────────────────────────────────────────────────
+# ── Model: auto-download if missing, then load ────────────────────────────────
 
-if not model_available():
-    st.markdown(
-        '<div class="warn-box">'
-        "⚠️ <strong>Model file not found.</strong> "
-        f"Place <code>best_resnet50_transfer_model.keras</code> at "
-        f"<code>{MODEL_PATH}</code> and reload the page."
-        "</div>",
-        unsafe_allow_html=True,
-    )
+if not ensure_model():
     st.stop()
 
 model = load_resnet_model()
