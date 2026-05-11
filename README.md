@@ -1,123 +1,152 @@
-# Breast Cancer Cell Mechanism-of-Action Classification
+# Breast Cancer Cell Mechanism-of-Action Classification Using CNNs
 
-> **Final Year AI Project** — CNN-based classification of drug mechanism-of-action (MoA) from breast cancer cell morphology images using transfer learning and Grad-CAM explainability.
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?logo=tensorflow&logoColor=white)
+![Keras](https://img.shields.io/badge/Keras-Deep%20Learning-red?logo=keras&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-Complete-brightgreen)
+![University](https://img.shields.io/badge/Anglia%20Ruskin%20University-BSc%20AI-navy)
+
+> **Final Year Project** — Classifying the mechanism of action (MoA) of chemical compounds from fluorescence microscopy images of breast cancer cells, using CNNs, transfer learning, and Grad-CAM explainability.
+
+**Student:** Muhammad Ertaza Manzoor | BSc Artificial Intelligence | Anglia Ruskin University
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Dataset](#dataset)
+- [Model Results](#model-results)
+- [Key Techniques](#key-techniques)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Grad-CAM Explainability](#grad-cam-explainability)
+- [Dependencies](#dependencies)
+- [Citation](#citation)
 
 ---
 
 ## Overview
 
-This project applies deep learning to the **BBBC021 dataset** (Broad Bioimage Benchmark Collection) to classify the mechanism of action of chemical compounds based on their morphological effect on MCF-7 breast cancer cells. Two CNN architectures (ResNet50 and MobileNetV2) are evaluated with transfer learning, and **Grad-CAM** is used to produce saliency maps that highlight which cellular features each model uses for its predictions.
+This project applies deep learning to the **BBBC021 dataset** to classify the mechanism of action of chemical compounds based on their morphological effect on **MCF-7 breast cancer cells**. Each compound induces a distinct cellular phenotype visible through fluorescence microscopy — this project trains CNN models to recognise those phenotypes automatically.
 
-### Key Goals
-- Classify 12 drug MoA categories from fluorescence microscopy images
-- Compare ResNet50 vs MobileNetV2 under identical training conditions
-- Provide interpretable explanations via Grad-CAM heatmaps
-- Evaluate using the standard **NSC (Not-Same-Compound)** accuracy metric
+The project follows a progressive model development strategy, from a simple baseline CNN through to fine-tuned transfer learning models, revealing how architecture choice and dataset size dramatically impact performance on a small, imbalanced biomedical dataset.
+
+**Best result: ResNet50 Transfer Learning — 87.34% accuracy, 0.8802 macro F1**
 
 ---
 
-## Dataset: BBBC021
+## Dataset
 
 | Property | Detail |
 |---|---|
-| Source | [Broad Bioimage Benchmark Collection](https://bbbc.broadinstitute.org/BBBC021) |
+| Source | [Broad Bioimage Benchmark Collection — BBBC021](https://bbbc.broadinstitute.org/BBBC021) |
 | Cell line | MCF-7 (human breast cancer) |
-| Staining | DAPI (nuclei), Tubulin, Actin |
-| Total images | ~13,200 single-cell crops across 103 compounds |
-| Image size | 3-channel (RGB composite), resized to 224×224 |
-| MoA classes | 12 (see below) |
+| Total samples | **788** |
+| Image size | **128 × 128 pixels** |
+| Channels | DAPI (nucleus), Tubulin (microtubules), Actin (cytoskeleton) |
+| Input format | 3-channel stacked image (RGB-style composite) |
+| Classes | **5 MoA categories** |
 
-### Mechanism-of-Action Classes
+### MoA Classes
 
-| # | Class | Description |
+| Class | Biological Effect |
+|---|---|
+| Aurora kinase inhibitors | Disrupt mitotic spindle assembly; cause abnormal cell division |
+| DNA damage agents | Induce DNA strand breaks; trigger cell cycle arrest |
+| Eg5 inhibitors | Block kinesin motor proteins; produce monopolar spindles |
+| Microtubule destabilizers | Depolymerise the microtubule network; collapse the cytoskeleton |
+| Microtubule stabilizers | Stabilise and bundle microtubules; prevent depolymerisation |
+
+### Channel Composite
+
+| Channel | Stain | Cellular Structure |
 |---|---|---|
-| 0 | Actin disruptors | Compounds disrupting actin cytoskeleton |
-| 1 | Aurora kinase inhibitors | Inhibit Aurora A/B kinases in mitosis |
-| 2 | Cholesterol-lowering | Statins and related compounds |
-| 3 | DNA damage | Agents causing DNA strand breaks |
-| 4 | DNA replication | Inhibitors of DNA synthesis machinery |
-| 5 | Eg5 kinesin inhibitors | Inhibit kinesin motor proteins |
-| 6 | Epithelial | Compounds affecting epithelial morphology |
-| 7 | Kinase inhibitors | Broad kinase inhibition |
-| 8 | Microtubule destabilizers | Depolymerise microtubule network |
-| 9 | Microtubule stabilizers | Stabilise and bundle microtubules |
-| 10 | Protein degradation | Proteasome and degradation pathway |
-| 11 | Protein synthesis | Ribosomal/translation inhibitors |
+| Channel 1 | DAPI | Nucleus (DNA) |
+| Channel 2 | Tubulin antibody | Microtubule network |
+| Channel 3 | Phalloidin | Actin cytoskeleton |
+
+The three channels are stacked into a single 128×128×3 image to match the input format expected by ImageNet-pretrained transfer learning models.
 
 ---
 
-## Results
+## Model Results
 
-### NSC Accuracy (Not-Same-Compound, primary metric)
+Five models were developed and evaluated. Results are reported on the held-out test set.
 
-| Model | Backbone | Trainable Params | NSC Accuracy | Top-3 Accuracy | F1 (macro) | Training Time |
-|---|---|---|---|---|---|---|
-| **ResNet50-FT** | ResNet50 (ImageNet) | 23.5M | **96.4%** | 99.1% | 0.961 | ~47 min |
-| **MobileNetV2-FT** | MobileNetV2 (ImageNet) | 3.4M | 93.8% | 98.4% | 0.934 | ~28 min |
-| ResNet50 (frozen) | ResNet50 (ImageNet) | 2.1M | 88.2% | 95.7% | 0.876 | ~19 min |
-| MobileNetV2 (frozen) | MobileNetV2 (ImageNet) | 1.3M | 84.6% | 93.2% | 0.841 | ~12 min |
-| Baseline CNN | — (from scratch) | 1.8M | 71.3% | 87.5% | 0.698 | ~35 min |
+| # | Model | Accuracy | Macro F1 | Loss | Notes |
+|---|---|---|---|---|---|
+| 1 | **Baseline CNN** (3 conv layers) | 0.7140 | 0.174 | — | Heavy majority-class bias; poor minority class recall |
+| 2 | CNN on Expanded Dataset (4 conv + BN) | 0.1390 | 0.049 | — | Collapsed to predicting only DNA damage class |
+| 3 | Refined CNN (4 conv + GAP) | 0.1390 | 0.049 | — | Same class-collapse pattern as Model 2 |
+| 4 | **ResNet50 Transfer Learning** | **0.8734** | **0.8802** | **0.3818** | Best model — strong generalisation across all classes |
+| 5 | MobileNetV2 Transfer Learning | 0.8228 | 0.7815 | 0.4604 | Competitive; ~5× fewer parameters than ResNet50 |
 
-> **FT** = full fine-tuning (all layers unfrozen after initial warm-up). NSC accuracy computed by leaving out all images from the same compound as the test set during training (compound-held-out split).
+### Key Observations
 
-### Per-Class F1 Score — ResNet50-FT
-
-| MoA Class | Precision | Recall | F1 |
-|---|---|---|---|
-| Actin disruptors | 0.98 | 0.97 | 0.975 |
-| Aurora kinase inhibitors | 0.95 | 0.96 | 0.955 |
-| Cholesterol-lowering | 0.94 | 0.93 | 0.935 |
-| DNA damage | 0.97 | 0.98 | 0.975 |
-| DNA replication | 0.96 | 0.95 | 0.955 |
-| Eg5 kinesin inhibitors | 0.99 | 0.99 | 0.990 |
-| Epithelial | 0.91 | 0.90 | 0.905 |
-| Kinase inhibitors | 0.93 | 0.94 | 0.935 |
-| Microtubule destabilizers | 0.98 | 0.97 | 0.975 |
-| Microtubule stabilizers | 0.97 | 0.98 | 0.975 |
-| Protein degradation | 0.95 | 0.96 | 0.955 |
-| Protein synthesis | 0.96 | 0.95 | 0.955 |
+- **Models 2 & 3** highlight a critical failure mode: when class imbalance is severe and the model is not constrained, it collapses to predicting only the dominant class (DNA damage), yielding high accuracy but near-zero F1 on all other classes.
+- **Class weighting** was the decisive intervention that enabled Models 4 and 5 to generalise across all five MoA categories.
+- **Transfer learning** from ImageNet proved highly effective despite the domain gap (natural images → fluorescence microscopy), because low-level edge and texture features are reusable.
+- **ResNet50 outperforms MobileNetV2** (by ~5 percentage points in macro F1), at the cost of more parameters and longer training time.
 
 ---
 
-## Repository Structure
+## Key Techniques
+
+| Technique | Purpose |
+|---|---|
+| **Transfer Learning** (ResNet50, MobileNetV2) | Leverage ImageNet features to compensate for small dataset size |
+| **Class Weighting** | Address severe class imbalance; prevent majority-class collapse |
+| **Batch Normalisation** | Stabilise training; reduce internal covariate shift |
+| **GlobalAveragePooling2D** | Reduce spatial dimensions without overfitting via large dense layers |
+| **Dropout** | Regularise fully-connected layers; reduce overfitting |
+| **Early Stopping** | Halt training when validation loss plateaus; prevent overtraining |
+| **Learning Rate Reduction** | `ReduceLROnPlateau` — decrease LR when validation loss stalls |
+| **Data Expansion** | Augment minority classes to partially correct class imbalance |
+| **Grad-CAM** | Produce saliency maps; validate that the model attends to biologically relevant cell structures |
+
+---
+
+## Project Structure
 
 ```
 cancer-cell-moa/
 ├── data/
-│   ├── raw/                    # Original BBBC021 TIFF images (not tracked by git)
-│   ├── processed/              # Preprocessed 224×224 PNG crops
-│   └── metadata/               # BBBC021_v1_image.csv, compound labels
+│   ├── raw/                        # Original BBBC021 TIFF images (not tracked)
+│   ├── processed/                  # Stacked 128×128 3-channel PNG images
+│   └── metadata/                   # BBBC021 label CSVs
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_model_training.ipynb
-│   ├── 04_evaluation.ipynb
-│   └── 05_gradcam_analysis.ipynb
+│   ├── 01_data_exploration.ipynb   # Dataset statistics and class distribution
+│   ├── 02_preprocessing.ipynb      # Channel stacking and normalisation
+│   ├── 03_model_training.ipynb     # Model training and learning curves
+│   ├── 04_evaluation.ipynb         # Test-set evaluation and confusion matrices
+│   └── 05_gradcam_analysis.ipynb   # Grad-CAM heatmap generation
 ├── src/
 │   ├── data/
-│   │   ├── dataset.py          # PyTorch Dataset class
-│   │   ├── augmentation.py     # Albumentations pipeline
-│   │   └── preprocessing.py    # TIFF loading, normalisation
+│   │   ├── preprocessing.py        # TIFF loading, channel stacking, resizing
+│   │   ├── dataset.py              # Data pipeline and train/val/test splits
+│   │   └── augmentation.py         # Image augmentation pipeline
 │   ├── models/
-│   │   ├── base_model.py       # Abstract model interface
-│   │   ├── resnet50.py         # ResNet50 transfer learning wrapper
-│   │   └── mobilenetv2.py      # MobileNetV2 transfer learning wrapper
+│   │   ├── base_model.py           # Abstract model interface
+│   │   ├── resnet50.py             # ResNet50 transfer learning wrapper
+│   │   └── mobilenetv2.py          # MobileNetV2 transfer learning wrapper
 │   ├── training/
-│   │   ├── trainer.py          # Training loop with early stopping
-│   │   └── callbacks.py        # LR scheduler, checkpointing
+│   │   ├── trainer.py              # Training loop with callbacks
+│   │   └── callbacks.py            # Early stopping, LR reduction
 │   ├── evaluation/
-│   │   ├── metrics.py          # NSC accuracy, F1, confusion matrix
-│   │   └── visualisation.py    # Plots, confusion matrix heatmap
+│   │   ├── metrics.py              # Accuracy, macro F1, confusion matrix
+│   │   └── visualisation.py        # Training curves, confusion matrix plots
 │   └── explainability/
-│       └── gradcam.py          # Grad-CAM and Guided Grad-CAM
+│       └── gradcam.py              # Grad-CAM heatmap generation
 ├── configs/
-│   ├── resnet50_config.yaml
-│   └── mobilenetv2_config.yaml
+│   ├── resnet50_config.yaml        # Hyperparameters for ResNet50
+│   └── mobilenetv2_config.yaml     # Hyperparameters for MobileNetV2
 ├── outputs/
-│   ├── models/                 # Saved .pth checkpoints
-│   ├── logs/                   # TensorBoard / CSV logs
-│   ├── figures/                # Training curves, confusion matrices
-│   └── gradcam/                # Grad-CAM heatmap images
+│   ├── models/                     # Saved model weights (.h5 / .keras)
+│   ├── logs/                       # Training history CSVs
+│   ├── figures/                    # Plots and confusion matrices
+│   └── gradcam/                    # Grad-CAM overlay images
 ├── tests/
 │   ├── test_dataset.py
 │   ├── test_models.py
@@ -128,73 +157,63 @@ cancer-cell-moa/
 
 ---
 
-## Installation
+## Getting Started
 
-### Prerequisites
-- Python 3.9+
-- CUDA 11.8+ (recommended for GPU training)
-- 8 GB+ VRAM (16 GB recommended for ResNet50 fine-tuning)
+### 1. Clone the Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/<your-username>/cancer-cell-moa.git
-cd cancer-cell-moa
+git clone https://github.com/ezzu9/cancer-cell-moa-classification.git
+cd cancer-cell-moa-classification
+```
 
-# Create a virtual environment
+### 2. Set Up the Environment
+
+```bash
 python -m venv venv
-source venv/bin/activate        # Linux/Mac
+source venv/bin/activate        # Linux / macOS
 # venv\Scripts\activate         # Windows
 
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Download BBBC021 Dataset
-1. Visit [https://bbbc.broadinstitute.org/BBBC021](https://bbbc.broadinstitute.org/BBBC021)
-2. Download all week zip files and extract into `data/raw/`
+### 3. Download the BBBC021 Dataset
+
+1. Go to [https://bbbc.broadinstitute.org/BBBC021](https://bbbc.broadinstitute.org/BBBC021)
+2. Download the weekly image zip files and extract them into `data/raw/`
 3. Download `BBBC021_v1_image.csv` and `BBBC021_v1_moa.csv` into `data/metadata/`
-4. Run preprocessing:
+
+### 4. Preprocess Images
 
 ```bash
-python src/data/preprocessing.py --raw_dir data/raw --output_dir data/processed
+python src/data/preprocessing.py \
+    --raw_dir data/raw \
+    --output_dir data/processed \
+    --size 128
 ```
 
----
+This stacks the DAPI, Tubulin, and Actin channels into 128×128×3 images organised by MoA class.
 
-## Usage
-
-### Training
+### 5. Train a Model
 
 ```bash
-# Train ResNet50 with full fine-tuning
+# Best model — ResNet50 transfer learning
 python src/training/trainer.py --config configs/resnet50_config.yaml
 
-# Train MobileNetV2
+# Lightweight alternative — MobileNetV2
 python src/training/trainer.py --config configs/mobilenetv2_config.yaml
 ```
 
-### Evaluation
+### 6. Evaluate
 
 ```bash
-# Evaluate on test split and print NSC accuracy
 python src/evaluation/metrics.py \
-    --checkpoint outputs/models/resnet50_best.pth \
+    --checkpoint outputs/models/resnet50_best.keras \
     --config configs/resnet50_config.yaml
 ```
 
-### Grad-CAM Visualisation
+### 7. Run Notebooks (Recommended)
 
-```bash
-# Generate Grad-CAM heatmaps for a sample batch
-python src/explainability/gradcam.py \
-    --checkpoint outputs/models/resnet50_best.pth \
-    --image_dir data/processed \
-    --output_dir outputs/gradcam \
-    --target_layer layer4
-```
-
-### Notebooks
-Run the notebooks in order for a guided walkthrough:
+For a full guided walkthrough, run the notebooks in order:
 
 ```bash
 jupyter notebook notebooks/
@@ -202,48 +221,52 @@ jupyter notebook notebooks/
 
 ---
 
-## Methods
+## Grad-CAM Explainability
 
-### Data Preprocessing
-- Load 3-channel TIFF stacks (DAPI, Tubulin, Actin)
-- Percentile normalisation per channel (1st–99th percentile)
-- Resize to 224×224 with bilinear interpolation
-- ImageNet mean/std normalisation for transfer learning compatibility
+Gradient-weighted Class Activation Mapping (**Grad-CAM**) was used to interpret what spatial features each model uses when classifying a cell image.
 
-### Augmentation (training only)
-- Random horizontal and vertical flips
-- Random rotation ±15°
-- Colour jitter (brightness, contrast)
-- Random Gaussian noise
+Heatmaps are overlaid onto the original fluorescence image to highlight the cellular regions with the highest gradient signal for the predicted MoA class.
 
-### Training Protocol
-1. **Warm-up phase** (5 epochs): freeze backbone, train classifier head only; LR = 1e-3
-2. **Fine-tuning phase** (up to 50 epochs): unfreeze all layers; LR = 1e-4, weight decay = 1e-4
-3. Cosine annealing LR schedule, early stopping (patience = 10)
-4. Batch size: 32, optimiser: AdamW
+```bash
+python src/explainability/gradcam.py \
+    --checkpoint outputs/models/resnet50_best.keras \
+    --image_dir data/processed \
+    --output_dir outputs/gradcam
+```
 
-### NSC Evaluation
-Images of the same compound are never split across train/test. For each test compound, the model predicts the MoA class of each image; the compound-level prediction is the majority vote. NSC accuracy = fraction of compounds correctly classified.
+### What the heatmaps reveal
 
-### Grad-CAM
-Gradient-weighted Class Activation Mapping applied to the final convolutional layer. Highlights which spatial regions contributed most to the predicted MoA class, enabling visual validation against known biological phenotypes.
+| Predicted MoA | Highlighted Region | Biological Interpretation |
+|---|---|---|
+| Microtubule stabilizers | Tubulin channel (bundled fibres) | Model correctly focuses on microtubule morphology |
+| Microtubule destabilizers | Diffuse tubulin signal | Absence of fibre structure is the discriminating feature |
+| Eg5 inhibitors | Pericentric tubulin structure | Monopolar spindle visible in mitotic cells |
+| DNA damage agents | DAPI channel (nucleus shape) | Nuclear fragmentation / enlarged nuclei |
+| Aurora kinase inhibitors | Nuclear + spindle region | Aberrant mitotic figures |
+
+Grad-CAM provides confidence that the model has learned biologically meaningful features rather than image artefacts or background noise.
 
 ---
 
 ## Dependencies
 
-See [`requirements.txt`](requirements.txt) for the full list. Core libraries:
+```
+tensorflow>=2.12
+numpy
+pandas
+opencv-python
+matplotlib
+scikit-learn
+jupyter
+tqdm
+PyYAML
+```
 
-| Library | Version | Purpose |
-|---|---|---|
-| PyTorch | 2.1.0 | Deep learning framework |
-| torchvision | 0.16.0 | Pretrained models, transforms |
-| albumentations | 1.3.1 | Image augmentation |
-| scikit-learn | 1.3.2 | Metrics, splits |
-| pandas | 2.1.1 | Metadata handling |
-| matplotlib / seaborn | 3.8.0 / 0.13.0 | Visualisation |
-| grad-cam | 1.4.8 | Grad-CAM implementation |
-| tensorboard | 2.14.0 | Training monitoring |
+Install all dependencies with:
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
@@ -253,23 +276,23 @@ If you use this work or the BBBC021 dataset, please cite:
 
 ```bibtex
 @article{bbbc021,
-  author    = {Ljosa, Vebjorn and Sokolnicki, Katherine L. and Carpenter, Anne E.},
-  title     = {Annotated high-throughput microscopy image sets for validation},
-  journal   = {Nature Methods},
-  year      = {2012},
-  volume    = {9},
-  pages     = {637},
-  doi       = {10.1038/nmeth.2083}
+  author  = {Ljosa, Vebjorn and Sokolnicki, Katherine L. and Carpenter, Anne E.},
+  title   = {Annotated high-throughput microscopy image sets for validation},
+  journal = {Nature Methods},
+  year    = {2012},
+  volume  = {9},
+  pages   = {637},
+  doi     = {10.1038/nmeth.2083}
 }
 
-@article{bbbc021_moa,
-  author    = {Caie, Peter D. and others},
-  title     = {High-Content Phenotypic Profiling of Drug Response Signatures across Distinct Cancer Cells},
-  journal   = {Molecular Cancer Therapeutics},
-  year      = {2010},
-  volume    = {9},
-  pages     = {1913--1926},
-  doi       = {10.1158/1535-7163.MCT-09-1148}
+@article{caie2010,
+  author  = {Caie, Peter D. and others},
+  title   = {High-Content Phenotypic Profiling of Drug Response Signatures across Distinct Cancer Cells},
+  journal = {Molecular Cancer Therapeutics},
+  year    = {2010},
+  volume  = {9},
+  pages   = {1913--1926},
+  doi     = {10.1158/1535-7163.MCT-09-1148}
 }
 ```
 
@@ -281,6 +304,5 @@ This project is released under the [MIT License](LICENSE).
 
 ---
 
-## Author
-
-**Ertaza Manzoor** — Final Year BSc/MEng AI Project, 2025–2026
+*Final Year Project — BSc Artificial Intelligence, Anglia Ruskin University, 2025–2026*
+*Muhammad Ertaza Manzoor*
