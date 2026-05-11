@@ -17,11 +17,16 @@
 
 - [Overview](#overview)
 - [Dataset](#dataset)
-- [Model Results](#model-results)
+- [Results](#results)
+  - [Performance Summary](#performance-summary)
+  - [Baseline CNN](#baseline-cnn)
+  - [Expanded & Refined CNNs](#expanded--refined-cnns)
+  - [ResNet50 Transfer Learning — Best Model](#resnet50-transfer-learning--best-model)
+  - [MobileNetV2 Transfer Learning](#mobilenetv2-transfer-learning)
+- [Grad-CAM Explainability](#grad-cam-explainability)
 - [Key Techniques](#key-techniques)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
-- [Grad-CAM Explainability](#grad-cam-explainability)
 - [Dependencies](#dependencies)
 - [Citation](#citation)
 
@@ -69,9 +74,19 @@ The project follows a progressive model development strategy, from a simple base
 
 The three channels are stacked into a single 128×128×3 image to match the input format expected by ImageNet-pretrained transfer learning models.
 
+### Class Distribution
+
+<p align="center">
+  <img src="outputs/figures/final_moa_class_distribution.png" width="680" alt="MoA class distribution across the final dataset"/>
+</p>
+
+<p align="center"><em>Class distribution across the 788-sample dataset. DNA damage agents represent the dominant class, contributing to the class imbalance challenge addressed through class weighting.</em></p>
+
 ---
 
-## Model Results
+## Results
+
+### Performance Summary
 
 Five models were developed and evaluated. Results are reported on the held-out test set.
 
@@ -80,15 +95,177 @@ Five models were developed and evaluated. Results are reported on the held-out t
 | 1 | **Baseline CNN** (3 conv layers) | 0.7140 | 0.174 | — | Heavy majority-class bias; poor minority class recall |
 | 2 | CNN on Expanded Dataset (4 conv + BN) | 0.1390 | 0.049 | — | Collapsed to predicting only DNA damage class |
 | 3 | Refined CNN (4 conv + GAP) | 0.1390 | 0.049 | — | Same class-collapse pattern as Model 2 |
-| 4 | **ResNet50 Transfer Learning** | **0.8734** | **0.8802** | **0.3818** | Best model — strong generalisation across all classes |
+| 4 | **ResNet50 Transfer Learning** ⭐ | **0.8734** | **0.8802** | **0.3818** | Best model — strong generalisation across all classes |
 | 5 | MobileNetV2 Transfer Learning | 0.8228 | 0.7815 | 0.4604 | Competitive; ~5× fewer parameters than ResNet50 |
 
-### Key Observations
+> **Key insight:** Models 2 & 3 demonstrate a critical failure mode — without class weighting, models collapse to predicting only the dominant class (DNA damage), yielding surface-level accuracy but near-zero F1 on all minority classes. Class weighting was the decisive fix that unlocked generalisation in the transfer learning models.
 
-- **Models 2 & 3** highlight a critical failure mode: when class imbalance is severe and the model is not constrained, it collapses to predicting only the dominant class (DNA damage), yielding high accuracy but near-zero F1 on all other classes.
-- **Class weighting** was the decisive intervention that enabled Models 4 and 5 to generalise across all five MoA categories.
-- **Transfer learning** from ImageNet proved highly effective despite the domain gap (natural images → fluorescence microscopy), because low-level edge and texture features are reusable.
-- **ResNet50 outperforms MobileNetV2** (by ~5 percentage points in macro F1), at the cost of more parameters and longer training time.
+---
+
+### Baseline CNN
+
+The first model (3 convolutional layers, no class weighting) achieves 71.4% accuracy but with heavy bias toward the majority class. The confusion matrix reveals near-zero recall on minority MoA classes.
+
+<p align="center">
+  <img src="outputs/figures/confusion_matrix_baseline.png" width="520" alt="Baseline CNN confusion matrix"/>
+</p>
+
+<p align="center"><em>Baseline CNN confusion matrix — the model correctly classifies the dominant class but largely ignores minority MoA classes.</em></p>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="outputs/figures/training_validation_accuracy_baseline.png" width="400" alt="Baseline CNN accuracy curves"/>
+      <br/><em>Training vs validation accuracy</em>
+    </td>
+    <td align="center">
+      <img src="outputs/figures/training_validation_loss_baseline.png" width="400" alt="Baseline CNN loss curves"/>
+      <br/><em>Training vs validation loss</em>
+    </td>
+  </tr>
+</table>
+
+---
+
+### Expanded & Refined CNNs
+
+Models 2 and 3 (4 conv layers, batch normalisation, then GlobalAveragePooling2D) were trained on an expanded dataset but without class weighting. Both collapsed entirely to predicting a single class, producing near-identical degenerate confusion matrices.
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="outputs/figures/cnn_normalized_confusion_matrix.png" width="400" alt="Expanded CNN normalised confusion matrix"/>
+      <br/><em>Expanded CNN — predicted only DNA damage class</em>
+    </td>
+    <td align="center">
+      <img src="outputs/figures/refined_cnn_normalized_confusion_matrix.png" width="400" alt="Refined CNN normalised confusion matrix"/>
+      <br/><em>Refined CNN — same class-collapse pattern</em>
+    </td>
+  </tr>
+</table>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="outputs/figures/cnn_training_validation_accuracy.png" width="400" alt="Expanded CNN accuracy"/>
+      <br/><em>Expanded CNN — accuracy curves</em>
+    </td>
+    <td align="center">
+      <img src="outputs/figures/refined_cnn_training_validation_accuracy.png" width="400" alt="Refined CNN accuracy"/>
+      <br/><em>Refined CNN — accuracy curves</em>
+    </td>
+  </tr>
+</table>
+
+---
+
+### ResNet50 Transfer Learning — Best Model
+
+Fine-tuning a pre-trained ResNet50 backbone with class weighting and early stopping produced the best results: **87.34% accuracy and 0.8802 macro F1**. The model generalises well across all five MoA classes.
+
+<p align="center">
+  <img src="outputs/figures/resnet50_normalized_confusion_matrix.png" width="580" alt="ResNet50 normalised confusion matrix"/>
+</p>
+
+<p align="center"><em>ResNet50 normalised confusion matrix — strong diagonal signal across all 5 MoA classes, with only minor confusion between microtubule destabilizers and other classes.</em></p>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="outputs/figures/resnet50_training_validation_accuracy.png" width="400" alt="ResNet50 accuracy curves"/>
+      <br/><em>Training vs validation accuracy</em>
+    </td>
+    <td align="center">
+      <img src="outputs/figures/resnet50_training_validation_loss.png" width="400" alt="ResNet50 loss curves"/>
+      <br/><em>Training vs validation loss</em>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="outputs/figures/resnet50_sample_predictions.png" width="760" alt="ResNet50 sample predictions on test images"/>
+</p>
+
+<p align="center"><em>ResNet50 sample predictions on held-out test images — predicted class labels versus ground truth across all five MoA categories.</em></p>
+
+---
+
+### MobileNetV2 Transfer Learning
+
+MobileNetV2 achieves **82.28% accuracy and 0.7815 macro F1** — competitive with ResNet50 at approximately one-fifth of the parameter count, making it a strong lightweight alternative.
+
+<p align="center">
+  <img src="outputs/figures/mobilenetv2_normalized_confusion_matrix.png" width="580" alt="MobileNetV2 normalised confusion matrix"/>
+</p>
+
+<p align="center"><em>MobileNetV2 normalised confusion matrix — good generalisation, though slightly weaker than ResNet50 on harder MoA classes.</em></p>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="outputs/figures/mobilenetv2_training_validation_accuracy.png" width="400" alt="MobileNetV2 accuracy curves"/>
+      <br/><em>Training vs validation accuracy</em>
+    </td>
+    <td align="center">
+      <img src="outputs/figures/mobilenetv2_training_validation_loss.png" width="400" alt="MobileNetV2 loss curves"/>
+      <br/><em>Training vs validation loss</em>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="outputs/figures/mobilenetv2_sample_predictions.png" width="760" alt="MobileNetV2 sample predictions on test images"/>
+</p>
+
+<p align="center"><em>MobileNetV2 sample predictions on held-out test images.</em></p>
+
+---
+
+## Grad-CAM Explainability
+
+Gradient-weighted Class Activation Mapping (**Grad-CAM**) was applied to the final convolutional layer of the ResNet50 model to produce heatmaps that highlight which spatial regions of the cell image most influenced each prediction. This validates that the model has learned biologically meaningful features rather than image artefacts.
+
+### Single Cell Example
+
+<p align="center">
+  <img src="outputs/figures/resnet50_gradcam_single_example.png" width="680" alt="Grad-CAM single cell example"/>
+</p>
+
+<p align="center"><em>Grad-CAM overlay on a single cell image — warm colours (red/yellow) indicate regions that most strongly activated the predicted MoA class.</em></p>
+
+### Correctly Classified Samples
+
+<p align="center">
+  <img src="outputs/figures/resnet50_gradcam_correct_samples.png" width="760" alt="Grad-CAM on correctly classified samples"/>
+</p>
+
+<p align="center"><em>Grad-CAM heatmaps for correctly classified cells across multiple MoA classes. The model consistently attends to the relevant cellular compartment for each class — nucleus for DNA damage, microtubule network for tubulin-targeting compounds.</em></p>
+
+### Random Sample Overview
+
+<p align="center">
+  <img src="outputs/figures/resnet50_gradcam_random_samples.png" width="760" alt="Grad-CAM on random test samples"/>
+</p>
+
+<p align="center"><em>Grad-CAM activations across a random sample of test images, showing consistent class-specific spatial attention.</em></p>
+
+### Misclassified Samples
+
+<p align="center">
+  <img src="outputs/figures/resnet50_gradcam_misclassified_samples.png" width="760" alt="Grad-CAM on misclassified samples"/>
+</p>
+
+<p align="center"><em>Grad-CAM for misclassified samples — activations often highlight ambiguous or overlapping morphological features, providing interpretable insight into where the model goes wrong.</em></p>
+
+### What the Heatmaps Reveal
+
+| Predicted MoA | Highlighted Region | Biological Interpretation |
+|---|---|---|
+| Microtubule stabilizers | Tubulin channel (bundled fibres) | Model correctly focuses on microtubule morphology |
+| Microtubule destabilizers | Diffuse tubulin signal | Absence of fibre structure is the discriminating feature |
+| Eg5 inhibitors | Pericentric tubulin structure | Monopolar spindle visible in mitotic cells |
+| DNA damage agents | DAPI channel (nucleus shape) | Nuclear fragmentation / enlarged nuclei |
+| Aurora kinase inhibitors | Nuclear + spindle region | Aberrant mitotic figures |
 
 ---
 
@@ -117,11 +294,16 @@ cancer-cell-moa/
 │   ├── processed/                  # Stacked 128×128 3-channel PNG images
 │   └── metadata/                   # BBBC021 label CSVs
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb   # Dataset statistics and class distribution
-│   ├── 02_preprocessing.ipynb      # Channel stacking and normalisation
-│   ├── 03_model_training.ipynb     # Model training and learning curves
-│   ├── 04_evaluation.ipynb         # Test-set evaluation and confusion matrices
-│   └── 05_gradcam_analysis.ipynb   # Grad-CAM heatmap generation
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_baseline_cnn.ipynb
+│   ├── 03_dataset_expansion.ipynb
+│   ├── 04_data_preprocessing.ipynb
+│   ├── 05a_cnn_training.ipynb
+│   ├── 05b_cnn_training_refined.ipynb
+│   ├── 06a_resnet50_transfer_learning.ipynb
+│   ├── 06b_mobilenetv2_transfer_learning.ipynb
+│   ├── 07_grad_cam.ipynb
+│   └── 08_single_image_inference.ipynb
 ├── src/
 │   ├── data/
 │   │   ├── preprocessing.py        # TIFF loading, channel stacking, resizing
@@ -140,17 +322,14 @@ cancer-cell-moa/
 │   └── explainability/
 │       └── gradcam.py              # Grad-CAM heatmap generation
 ├── configs/
-│   ├── resnet50_config.yaml        # Hyperparameters for ResNet50
-│   └── mobilenetv2_config.yaml     # Hyperparameters for MobileNetV2
+│   ├── resnet50_config.yaml
+│   └── mobilenetv2_config.yaml
 ├── outputs/
-│   ├── models/                     # Saved model weights (.h5 / .keras)
-│   ├── logs/                       # Training history CSVs
-│   ├── figures/                    # Plots and confusion matrices
+│   ├── models/                     # Saved model weights (.keras)
+│   ├── logs/                       # Training history
+│   ├── figures/                    # All result plots (committed)
 │   └── gradcam/                    # Grad-CAM overlay images
 ├── tests/
-│   ├── test_dataset.py
-│   ├── test_models.py
-│   └── test_gradcam.py
 ├── requirements.txt
 └── .gitignore
 ```
@@ -179,21 +358,18 @@ pip install -r requirements.txt
 ### 3. Download the BBBC021 Dataset
 
 1. Go to [https://bbbc.broadinstitute.org/BBBC021](https://bbbc.broadinstitute.org/BBBC021)
-2. Download the weekly image zip files and extract them into `data/raw/`
+2. Download the weekly image zip files and extract into `data/raw/`
 3. Download `BBBC021_v1_image.csv` and `BBBC021_v1_moa.csv` into `data/metadata/`
 
-### 4. Preprocess Images
+### 4. Run the Notebooks (Recommended)
+
+Run notebooks in order for a complete walkthrough from raw data to Grad-CAM:
 
 ```bash
-python src/data/preprocessing.py \
-    --raw_dir data/raw \
-    --output_dir data/processed \
-    --size 128
+jupyter notebook notebooks/
 ```
 
-This stacks the DAPI, Tubulin, and Actin channels into 128×128×3 images organised by MoA class.
-
-### 5. Train a Model
+### 5. Train a Model Directly
 
 ```bash
 # Best model — ResNet50 transfer learning
@@ -202,49 +378,6 @@ python src/training/trainer.py --config configs/resnet50_config.yaml
 # Lightweight alternative — MobileNetV2
 python src/training/trainer.py --config configs/mobilenetv2_config.yaml
 ```
-
-### 6. Evaluate
-
-```bash
-python src/evaluation/metrics.py \
-    --checkpoint outputs/models/resnet50_best.keras \
-    --config configs/resnet50_config.yaml
-```
-
-### 7. Run Notebooks (Recommended)
-
-For a full guided walkthrough, run the notebooks in order:
-
-```bash
-jupyter notebook notebooks/
-```
-
----
-
-## Grad-CAM Explainability
-
-Gradient-weighted Class Activation Mapping (**Grad-CAM**) was used to interpret what spatial features each model uses when classifying a cell image.
-
-Heatmaps are overlaid onto the original fluorescence image to highlight the cellular regions with the highest gradient signal for the predicted MoA class.
-
-```bash
-python src/explainability/gradcam.py \
-    --checkpoint outputs/models/resnet50_best.keras \
-    --image_dir data/processed \
-    --output_dir outputs/gradcam
-```
-
-### What the heatmaps reveal
-
-| Predicted MoA | Highlighted Region | Biological Interpretation |
-|---|---|---|
-| Microtubule stabilizers | Tubulin channel (bundled fibres) | Model correctly focuses on microtubule morphology |
-| Microtubule destabilizers | Diffuse tubulin signal | Absence of fibre structure is the discriminating feature |
-| Eg5 inhibitors | Pericentric tubulin structure | Monopolar spindle visible in mitotic cells |
-| DNA damage agents | DAPI channel (nucleus shape) | Nuclear fragmentation / enlarged nuclei |
-| Aurora kinase inhibitors | Nuclear + spindle region | Aberrant mitotic figures |
-
-Grad-CAM provides confidence that the model has learned biologically meaningful features rather than image artefacts or background noise.
 
 ---
 
@@ -261,8 +394,6 @@ jupyter
 tqdm
 PyYAML
 ```
-
-Install all dependencies with:
 
 ```bash
 pip install -r requirements.txt
