@@ -19,7 +19,7 @@ from tensorflow.keras.models import load_model
 # ── Page config ───────────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="Cancer Cell MoA Classifier",
+    page_title="Breast Cancer Cell MoA Classifier",
     page_icon="🔬",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -619,7 +619,7 @@ with st.sidebar:
 
 st.markdown(
     '<div class="hero">'
-    '<div class="hero-title">🔬 Cancer Cell MoA Classifier</div>'
+    '<div class="hero-title">🔬 Breast Cancer Cell MoA Classifier</div>'
     '<div class="hero-sub">'
     "Deep learning classification of drug mechanism-of-action from fluorescence "
     "microscopy images of MCF-7 breast cancer cells, with Grad-CAM explainability."
@@ -655,7 +655,7 @@ up_col, how_col = st.columns([1.6, 1], gap="large")
 with up_col:
     st.markdown('<div class="card-title">Upload Microscopy Image</div>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
-        "image",
+        "Upload Image",
         type=["png", "jpg", "jpeg", "tif", "tiff"],
         label_visibility="collapsed",
     )
