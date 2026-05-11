@@ -1,8 +1,27 @@
 # Breast Cancer Cell Mechanism-of-Action Classification Using CNNs
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?logo=tensorflow&logoColor=white)
+<p align="center">
+  <a href="https://breast-cancer-moa-classifier.streamlit.app" target="_blank">
+    <img src="https://img.shields.io/badge/🚀%20Live%20Demo-Try%20the%20App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Live Demo"/>
+  </a>
+  &nbsp;
+  <a href="https://huggingface.co/Ertaza/breast-cancer-moa-resnet50" target="_blank">
+    <img src="https://img.shields.io/badge/🤗%20Hugging%20Face-ResNet50%20Model-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" alt="Hugging Face Model"/>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://breast-cancer-moa-classifier.streamlit.app" target="_blank">
+    <strong>👉 breast-cancer-moa-classifier.streamlit.app</strong>
+  </a>
+</p>
+
+---
+
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.19-orange?logo=tensorflow&logoColor=white)
 ![Keras](https://img.shields.io/badge/Keras-Deep%20Learning-red?logo=keras&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Status](https://img.shields.io/badge/Status-Complete-brightgreen)
 ![University](https://img.shields.io/badge/Anglia%20Ruskin%20University-BSc%20AI-navy)
