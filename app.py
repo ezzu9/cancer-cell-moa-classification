@@ -238,14 +238,26 @@ def make_gradcam_heatmap(
     with tf.GradientTape() as tape:
         outputs = grad_model(img_array)
         conv_outputs = outputs[0]
-        predictions = outputs[1]
-        # outputs[1] may be a Python list in some TF/Keras versions;
-        # convert to tensor so [:, idx] indexing works correctly
-        if not isinstance(predictions, tf.Tensor):
-            predictions = tf.convert_to_tensor(predictions)
+        raw_preds = outputs[1]
+
+        # Depending on the TF/Keras version and how the model was saved,
+        # raw_preds can arrive as any of:
+        #   (1, 5)  – standard batch-first tensor
+        #   (5, 1)  – per-class (1,) tensors stacked by tf.convert_to_tensor
+        #   (5,)    – flat tensor
+        #   list    – Python list of scalars or tensors
+        # tf.reshape(…, [-1]) collapses all of these to a guaranteed (5,)
+        # 1-D tensor so tf.gather can index it safely.
+        if not isinstance(raw_preds, tf.Tensor):
+            raw_preds = tf.convert_to_tensor(raw_preds)
+        preds_flat = tf.reshape(raw_preds, [-1])   # → (num_classes,)
+
         if pred_index is None:
-            pred_index = int(tf.argmax(predictions[0]))
-        class_channel = predictions[:, pred_index]
+            pred_index = int(tf.argmax(preds_flat))
+
+        # tf.gather on a 1-D tensor is unambiguous and works regardless of
+        # how predictions arrived; [:, idx] slice indexing is not.
+        class_channel = tf.gather(preds_flat, pred_index)
 
     grads = tape.gradient(class_channel, conv_outputs)
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
