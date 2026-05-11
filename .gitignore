@@ -36,6 +36,8 @@ data/processed/*
 outputs/models/*.pth
 outputs/models/*.pt
 outputs/models/*.ckpt
+outputs/models/*.keras
+outputs/models/*.h5
 
 # ── Logs ─────────────────────────────────────────────────────────────────────
 outputs/logs/*
