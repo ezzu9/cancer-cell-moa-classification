@@ -1,0 +1,65 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Data — never commit raw/processed images or large files ──────────────────
+data/raw/*
+data/processed/*
+*.tif
+*.tiff
+*.png
+*.jpg
+*.jpeg
+# Keep metadata CSVs (small, version-controlled)
+!data/metadata/*.csv
+
+# ── Model weights ────────────────────────────────────────────────────────────
+outputs/models/*.pth
+outputs/models/*.pt
+outputs/models/*.ckpt
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+outputs/logs/*
+runs/
+*.log
+
+# ── Generated figures and Grad-CAM outputs ───────────────────────────────────
+outputs/figures/*
+outputs/gradcam/*
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Miscellaneous ────────────────────────────────────────────────────────────
+.env
+*.bak
+*.tmp
+
+# Keep directory sentinel files (must be last to override all directory patterns above)
+!**/.gitkeep

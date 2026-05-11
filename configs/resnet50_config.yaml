@@ -1,0 +1,27 @@
+run_name: resnet50_ft_v1
+model: resnet50
+
+# Data
+processed_dir: data/processed
+metadata_csv: data/metadata/BBBC021_v1_image.csv
+moa_csv: data/metadata/BBBC021_v1_moa.csv
+image_size: 224
+val_fraction: 0.15
+test_fraction: 0.15
+seed: 42
+
+# DataLoader
+batch_size: 32
+num_workers: 4
+
+# Training
+warmup_epochs: 5
+warmup_lr: 1.0e-3
+max_epochs: 50
+finetune_lr: 1.0e-4
+weight_decay: 1.0e-4
+patience: 10
+
+# Output
+checkpoint_dir: outputs/models
+log_dir: outputs/logs
