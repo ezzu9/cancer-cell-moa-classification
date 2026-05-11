@@ -154,16 +154,73 @@ def model_available() -> bool:
 
 # ── Preprocessing ─────────────────────────────────────────────────────────────
 
-def preprocess_for_display(pil_image: Image.Image) -> np.ndarray:
-    """Return a normalised 128×128×3 float32 array in [0, 1] for display."""
-    img = np.array(pil_image.convert("RGB").resize((IMG_SIZE, IMG_SIZE)))
-    return img.astype(np.float32) / 255.0
+def load_raw_array(pil_image: Image.Image) -> np.ndarray:
+    """
+    Convert a PIL image to a uint8 (0–255) HxWx3 numpy array.
+
+    BBBC021 TIFFs are 16-bit. PIL preserves the raw bit depth, so we scale
+    16-bit values down to 8-bit the same way cv2.IMREAD_GRAYSCALE does
+    (right-shift by 8 / divide by 256). This ensures the model receives the
+    same value range it was trained on.
+    """
+    arr = np.array(pil_image)
+
+    # Collapse any extra dimensions (e.g. RGBA → RGB)
+    if arr.ndim == 2:
+        arr = np.stack([arr, arr, arr], axis=-1)
+    elif arr.shape[2] == 4:
+        arr = arr[:, :, :3]
+
+    # Scale 16-bit → 8-bit (matches cv2.IMREAD_GRAYSCALE behaviour used in training)
+    if arr.dtype == np.uint16:
+        arr = (arr >> 8).astype(np.uint8)
+    elif arr.dtype != np.uint8:
+        arr = np.clip(arr, 0, 255).astype(np.uint8)
+
+    return arr
 
 
-def preprocess_for_model(display_img: np.ndarray) -> np.ndarray:
-    """Apply ResNet50 preprocess_input on top of the display image."""
-    img_uint8 = (display_img * 255.0).astype(np.float32)
-    img_resnet = preprocess_input(img_uint8)
+def percentile_normalise(arr: np.ndarray, low: float = 1.0, high: float = 99.0) -> np.ndarray:
+    """
+    Stretch each channel independently to [0, 1] using percentile clipping.
+
+    Fluorescence images have very sparse intensity distributions — most pixels
+    are near-zero background with a small number of bright structures. A plain
+    /255 normalisation leaves the image invisible. Percentile stretching maps
+    the 1st–99th percentile range to the full [0, 1] display range, making
+    cellular structures visible regardless of the raw bit depth.
+    """
+    result = np.zeros(arr.shape, dtype=np.float32)
+    for c in range(arr.shape[2]):
+        channel = arr[:, :, c].astype(np.float32)
+        p_low, p_high = np.percentile(channel, [low, high])
+        if p_high > p_low:
+            result[:, :, c] = np.clip((channel - p_low) / (p_high - p_low), 0.0, 1.0)
+        # else: channel stays all-zero (uniform channel — nothing to show)
+    return result
+
+
+def preprocess_for_display(raw_arr: np.ndarray) -> np.ndarray:
+    """
+    Resize to 128×128 and apply per-channel percentile normalisation.
+    Returns float32 in [0, 1] suitable for matplotlib / st.image.
+    """
+    resized = cv2.resize(raw_arr, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+    return percentile_normalise(resized)
+
+
+def preprocess_for_model(raw_arr: np.ndarray) -> np.ndarray:
+    """
+    Reproduce the exact training pipeline:
+      resize → float32 in [0, 255] → resnet50.preprocess_input → add batch dim.
+
+    No percentile normalisation here — the model was trained on plain
+    uint8 pixel values passed through preprocess_input, not contrast-stretched
+    images.
+    """
+    resized = cv2.resize(raw_arr, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_LINEAR)
+    img_float = resized.astype(np.float32)          # still in [0, 255]
+    img_resnet = preprocess_input(img_float)         # ImageNet mean/std shift
     return np.expand_dims(img_resnet, axis=0)
 
 # ── Grad-CAM ──────────────────────────────────────────────────────────────────
@@ -343,8 +400,9 @@ if uploaded_file is not None:
     st.divider()
 
     pil_image = Image.open(uploaded_file)
-    display_img = preprocess_for_display(pil_image)
-    model_input = preprocess_for_model(display_img)
+    raw_arr = load_raw_array(pil_image)
+    display_img = preprocess_for_display(raw_arr)   # percentile-normalised, for visualisation only
+    model_input = preprocess_for_model(raw_arr)     # plain uint8 → preprocess_input, matches training
 
     with st.spinner("Classifying…"):
         probs = model.predict(model_input, verbose=0)[0]
