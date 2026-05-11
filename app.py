@@ -179,9 +179,15 @@ def make_gradcam_heatmap(
         outputs=[model.get_layer(last_conv_layer_name).output, model.output],
     )
     with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
+        outputs = grad_model(img_array)
+        conv_outputs = outputs[0]
+        predictions = outputs[1]
+        # outputs[1] may be a Python list in some TF/Keras versions;
+        # convert to tensor so [:, idx] indexing works correctly
+        if not isinstance(predictions, tf.Tensor):
+            predictions = tf.convert_to_tensor(predictions)
         if pred_index is None:
-            pred_index = tf.argmax(predictions[0])
+            pred_index = int(tf.argmax(predictions[0]))
         class_channel = predictions[:, pred_index]
 
     grads = tape.gradient(class_channel, conv_outputs)
