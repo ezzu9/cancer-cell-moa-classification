@@ -334,17 +334,25 @@ section[data-testid="stSidebar"] {
     border-radius: 16px;
     padding: 1.25rem 1.4rem;
     color: white;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 .sidebar-name {
     font-size: 1rem;
     font-weight: 800;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.25rem;
 }
 .sidebar-uni {
     font-size: 0.78rem;
     opacity: 0.82;
     line-height: 1.4;
+}
+.sidebar-section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8892b0;
+    margin: 1rem 0 0.55rem;
 }
 .sidebar-stat-row {
     display: flex;
@@ -353,12 +361,29 @@ section[data-testid="stSidebar"] {
     background: white;
     border-radius: 10px;
     padding: 0.55rem 0.9rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.45rem;
     box-shadow: 0 1px 6px rgba(60,70,120,0.06);
     border: 1px solid #eaeef8;
 }
 .sidebar-stat-label { font-size: 0.8rem; color: #7a85b0; font-weight: 500; }
 .sidebar-stat-value { font-size: 0.88rem; font-weight: 700; color: #2d3561; }
+.sidebar-link-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid #d8ddf0;
+    border-radius: 10px;
+    padding: 0.55rem 0.9rem;
+    margin-bottom: 0.45rem;
+    text-decoration: none !important;
+    color: #2d3561 !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 1px 6px rgba(60,70,120,0.06);
+    transition: background 0.15s;
+}
+.sidebar-link-btn:hover { background: #f0f3ff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -626,6 +651,7 @@ def build_gradcam_figure(
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
 with st.sidebar:
+    # ── Profile card ──────────────────────────────────────────────────────────
     st.markdown(
         '<div class="sidebar-profile">'
         '<div class="sidebar-name">Muhammad Ertaza Manzoor</div>'
@@ -634,7 +660,8 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    st.markdown("**Model Performance**")
+    # ── Model stats ───────────────────────────────────────────────────────────
+    st.markdown('<div class="sidebar-section-label">Model Performance</div>', unsafe_allow_html=True)
     for label, value in [
         ("Accuracy",   "87.34 %"),
         ("Macro F1",   "0.8802"),
@@ -652,8 +679,8 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("**MoA Classes**")
+    # ── MoA classes ───────────────────────────────────────────────────────────
+    st.markdown('<div class="sidebar-section-label">MoA Classes</div>', unsafe_allow_html=True)
     for name, info in CLASS_INFO.items():
         with st.expander(f"{info['icon']}  {name}"):
             st.markdown(
@@ -661,14 +688,26 @@ with st.sidebar:
                 unsafe_allow_html=True,
             )
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("**Image Channels**")
+    # ── Image channels ────────────────────────────────────────────────────────
+    st.markdown('<div class="sidebar-section-label">Image Channels</div>', unsafe_allow_html=True)
     st.markdown(
-        "| Channel | Stain | Structure |\n"
+        "| Ch | Stain | Structure |\n"
         "|---|---|---|\n"
         "| R | DAPI | Nucleus |\n"
         "| G | Tubulin | Microtubules |\n"
         "| B | Actin | Cytoskeleton |"
+    )
+
+    # ── Links ─────────────────────────────────────────────────────────────────
+    st.markdown('<div class="sidebar-section-label">Links</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<a class="sidebar-link-btn" href="https://github.com/ezzu9" target="_blank">'
+        "🐙&nbsp; GitHub Profile"
+        "</a>"
+        '<a class="sidebar-link-btn" href="https://huggingface.co/Ertaza/breast-cancer-moa-resnet50" target="_blank">'
+        "🤗&nbsp; HuggingFace Model"
+        "</a>",
+        unsafe_allow_html=True,
     )
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
@@ -701,15 +740,13 @@ model = load_resnet_model()
 up_col, how_col = st.columns([1.6, 1], gap="large")
 
 with up_col:
-    st.markdown('<div class="card-title">Upload Microscopy Image</div>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
-        "Upload Image",
+        "Upload Microscopy Image",
         type=["png", "jpg", "jpeg", "tif", "tiff"],
-        label_visibility="collapsed",
+        help="Supports PNG, JPG, 8-bit and 16-bit TIFF. Upload a 3-channel RGB composite (DAPI / Tubulin / Actin).",
     )
     st.caption(
-        "Upload a 3-channel composite image (DAPI / Tubulin / Actin stacked as RGB). "
-        "16-bit TIFFs are supported — contrast is enhanced automatically."
+        "16-bit TIFFs are supported — contrast is enhanced automatically via percentile normalisation."
     )
 
 with how_col:
