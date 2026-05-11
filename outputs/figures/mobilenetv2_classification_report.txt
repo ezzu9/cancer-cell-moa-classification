@@ -1,0 +1,18 @@
+MobileNetV2 Transfer Learning Classification Report
+==================================================
+
+Test Loss: 0.4604
+Test Accuracy: 0.8228
+Macro F1 Score: 0.7815
+
+                           precision    recall  f1-score   support
+
+ Aurora kinase inhibitors       0.80      0.86      0.83        14
+               DNA damage       0.82      0.82      0.82        22
+           Eg5 inhibitors       0.71      0.59      0.65        17
+Microtubule destabilizers       0.65      0.79      0.71        28
+  Microtubule stabilizers       0.93      0.88      0.91        77
+
+                 accuracy                           0.82       158
+                macro avg       0.78      0.79      0.78       158
+             weighted avg       0.83      0.82      0.82       158

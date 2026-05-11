@@ -1,0 +1,13 @@
+ResNet50 Grad-CAM Summary
+=========================
+
+Grad-CAM target layer: conv5_block3_out
+Number of test samples: 158
+Correctly classified samples: 138
+Misclassified samples: 20
+
+Saved figures:
+- resnet50_gradcam_random_samples.png
+- resnet50_gradcam_correct_samples.png
+- resnet50_gradcam_misclassified_samples.png
+- resnet50_gradcam_single_example.png

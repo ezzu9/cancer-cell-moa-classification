@@ -1,0 +1,18 @@
+ResNet50 Transfer Learning Classification Report
+===============================================
+
+Test Loss: 0.3818
+Test Accuracy: 0.8734
+Macro F1 Score: 0.8802
+
+                           precision    recall  f1-score   support
+
+ Aurora kinase inhibitors       1.00      1.00      1.00        14
+               DNA damage       1.00      0.95      0.98        22
+           Eg5 inhibitors       0.64      0.82      0.72        17
+Microtubule destabilizers       0.74      0.93      0.83        28
+  Microtubule stabilizers       0.95      0.82      0.88        77
+
+                 accuracy                           0.87       158
+                macro avg       0.87      0.90      0.88       158
+             weighted avg       0.89      0.87      0.88       158

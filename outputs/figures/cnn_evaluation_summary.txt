@@ -1,0 +1,15 @@
+CNN Evaluation Summary
+======================
+
+Test Loss: 4.6807
+Test Accuracy: 0.1392
+Macro F1 Score: 0.0489
+Number of Test Samples: 158
+Number of Classes: 5
+
+Class Names:
+0: Aurora kinase inhibitors
+1: DNA damage
+2: Eg5 inhibitors
+3: Microtubule destabilizers
+4: Microtubule stabilizers

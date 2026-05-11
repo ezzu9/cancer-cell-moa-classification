@@ -1,0 +1,18 @@
+Refined CNN Classification Report
+=================================
+
+Test Loss: 1.6123
+Test Accuracy: 0.1392
+Macro F1 Score: 0.0489
+
+                           precision    recall  f1-score   support
+
+ Aurora kinase inhibitors       0.00      0.00      0.00        14
+               DNA damage       0.14      1.00      0.24        22
+           Eg5 inhibitors       0.00      0.00      0.00        17
+Microtubule destabilizers       0.00      0.00      0.00        28
+  Microtubule stabilizers       0.00      0.00      0.00        77
+
+                 accuracy                           0.14       158
+                macro avg       0.03      0.20      0.05       158
+             weighted avg       0.02      0.14      0.03       158

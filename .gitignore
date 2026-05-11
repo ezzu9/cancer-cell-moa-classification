@@ -29,6 +29,8 @@ data/processed/*
 *.jpeg
 # Keep metadata CSVs (small, version-controlled)
 !data/metadata/*.csv
+# Keep final result figures (portfolio assets)
+!outputs/figures/*
 
 # ── Model weights ────────────────────────────────────────────────────────────
 outputs/models/*.pth
@@ -41,7 +43,7 @@ runs/
 *.log
 
 # ── Generated figures and Grad-CAM outputs ───────────────────────────────────
-outputs/figures/*
+# outputs/figures/ is tracked — contains final result plots for the portfolio
 outputs/gradcam/*
 
 # ── IDEs ─────────────────────────────────────────────────────────────────────

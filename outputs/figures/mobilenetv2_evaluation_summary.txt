@@ -1,0 +1,15 @@
+MobileNetV2 Transfer Learning Evaluation Summary
+===============================================
+
+Test Loss: 0.4604
+Test Accuracy: 0.8228
+Macro F1 Score: 0.7815
+Number of Test Samples: 158
+Number of Classes: 5
+
+Class Names:
+0: Aurora kinase inhibitors
+1: DNA damage
+2: Eg5 inhibitors
+3: Microtubule destabilizers
+4: Microtubule stabilizers
