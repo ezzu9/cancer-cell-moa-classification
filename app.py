@@ -384,6 +384,23 @@ section[data-testid="stSidebar"] {
     transition: background 0.15s;
 }
 .sidebar-link-btn:hover { background: #f0f3ff; }
+
+/* ── File uploader: hide duplicated native button label ── */
+[data-testid="stFileUploaderDropzone"] button {
+    visibility: hidden;
+    position: relative;
+}
+[data-testid="stFileUploaderDropzone"] button::before {
+    content: "Browse Files";
+    visibility: visible;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
 </style>
 """, unsafe_allow_html=True)
 
